@@ -84,7 +84,7 @@ Ensure that these tables are populated with data before running the queries.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/omkarb40/EDA.git
+   git clone https://github.com/omkarb40/E-commerce-Data-Analysis.git
    cd ecommerce-data-analysis
 2. Execute the ecommerce_eda.sql script in your SQL environment:
     SOURCE ecommerce_eda.sql;
