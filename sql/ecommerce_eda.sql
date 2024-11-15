@@ -1,134 +1,112 @@
 -- Exploratory Data Analysis
+
 -- 1. Overview Statistics
-SELECT COUNT(DISTINCT customer_id) as total_customers
-FROM customers;
-
--- Number of products
-SELECT COUNT(DISTINCT product_id) as total_products
-FROM products;
-
--- Number of orders
-SELECT COUNT(DISTINCT order_id) as total_orders
-FROM orders;
+SELECT COUNT(DISTINCT CustomerID) AS total_customers FROM e_commerce_clone2;
+SELECT COUNT(DISTINCT StockCode) AS total_products FROM e_commerce_clone2;
+SELECT COUNT(DISTINCT InvoiceNo) AS total_orders FROM e_commerce_clone2;
+SELECT AVG(items_per_order) AS avg_items_per_order
+FROM (
+    SELECT InvoiceNo, SUM(Quantity) AS items_per_order
+    FROM e_commerce_clone2
+    GROUP BY InvoiceNo
+) AS order_item_counts;
 
 -- 2. Sales Analysis
--- Total revenue by month
-SELECT 
-    DATE_FORMAT(order_date, '%Y-%m') as month,
-    COUNT(DISTINCT order_id) as num_orders,
-    SUM(total_amount) as total_revenue,
-    AVG(total_amount) as avg_order_value
-FROM orders
+SELECT DATE_FORMAT(InvoiceDate, '%Y-%m') AS month, SUM(Quantity * UnitPrice) AS total_revenue
+FROM e_commerce_clone2
 GROUP BY month
 ORDER BY month;
 
--- Top selling products
-SELECT 
-    p.product_name,
-    COUNT(oi.order_id) as times_ordered,
-    SUM(oi.quantity) as total_quantity,
-    SUM(oi.quantity * oi.unit_price) as total_revenue
-FROM order_items oi
-JOIN products p ON oi.product_id = p.product_id
-GROUP BY p.product_id, p.product_name
+SELECT Description AS product_name, SUM(Quantity) AS total_quantity, SUM(Quantity * UnitPrice) AS total_revenue
+FROM e_commerce_clone2
+GROUP BY Description
 ORDER BY total_revenue DESC
 LIMIT 10;
 
 -- 3. Customer Behavior Analysis
--- Customer purchase frequency
-SELECT 
-    customer_id,
-    COUNT(DISTINCT order_id) as num_orders,
-    AVG(total_amount) as avg_order_value,
-    MIN(order_date) as first_purchase,
-    MAX(order_date) as last_purchase,
-    DATEDIFF(MAX(order_date), MIN(order_date)) as customer_lifetime_days
-FROM orders
-GROUP BY customer_id;
+SELECT CustomerID, COUNT(DISTINCT InvoiceNo) AS num_orders, AVG(Quantity * UnitPrice) AS avg_order_value,
+    MIN(InvoiceDate) AS first_purchase, MAX(InvoiceDate) AS last_purchase,
+    DATEDIFF(CURDATE(), MAX(InvoiceDate)) AS recency_days
+FROM e_commerce_clone2
+GROUP BY CustomerID;
+
+WITH customer_recency AS (
+    SELECT CustomerID, DATEDIFF(CURDATE(), MAX(InvoiceDate)) AS recency_days
+    FROM e_commerce_clone2
+    GROUP BY CustomerID
+)
+SELECT CASE
+        WHEN recency_days <= 30 THEN 'Active'
+        WHEN recency_days <= 90 THEN 'Churn Risk'
+        ELSE 'Churned'
+    END AS customer_segment,
+    COUNT(*) AS num_customers
+FROM customer_recency
+GROUP BY customer_segment;
 
 -- 4. Product Category Analysis
--- Sales by category
-SELECT 
-    c.category_name,
-    COUNT(DISTINCT oi.order_id) as num_orders,
-    SUM(oi.quantity) as total_quantity,
-    SUM(oi.quantity * oi.unit_price) as total_revenue,
-    AVG(oi.unit_price) as avg_unit_price
+-- Note: Adjust joins for actual table names and relationships.
+SELECT DATE_FORMAT(o.order_date, '%Y-%m') AS month, c.category_name, SUM(oi.quantity * oi.unit_price) AS total_revenue
 FROM order_items oi
+JOIN orders o ON oi.order_id = o.order_id
 JOIN products p ON oi.product_id = p.product_id
 JOIN categories c ON p.category_id = c.category_id
-GROUP BY c.category_id, c.category_name
-ORDER BY total_revenue DESC;
+GROUP BY month, c.category_name
+ORDER BY month, total_revenue DESC;
 
--- 5. Customer Segmentation
--- RFM Analysis
-WITH rfm_calc AS (
-    SELECT 
-        customer_id,
-        DATEDIFF(MAX(order_date), MIN(order_date)) as recency,
-        COUNT(DISTINCT order_id) as frequency,
-        AVG(total_amount) as monetary
-    FROM orders
-    GROUP BY customer_id
-)
-SELECT 
-    CASE 
-        WHEN frequency > 10 AND monetary > 1000 THEN 'VIP'
-        WHEN frequency > 5 AND monetary > 500 THEN 'Regular'
-        ELSE 'Occasional'
-    END as customer_segment,
-    COUNT(*) as number_of_customers,
-    AVG(monetary) as avg_spending
-FROM rfm_calc
-GROUP BY 
-    CASE 
-        WHEN frequency > 10 AND monetary > 1000 THEN 'VIP'
-        WHEN frequency > 5 AND monetary > 500 THEN 'Regular'
-        ELSE 'Occasional'
-    END;
+SELECT c.category_name, COUNT(DISTINCT p.product_id) AS unique_products
+FROM products p
+JOIN categories c ON p.category_id = c.category_id
+GROUP BY c.category_name
+ORDER BY unique_products DESC;
+
+-- 5. Customer Segmentation (RFM Analysis)
+-- Sales patterns by day of the week
+SELECT DAYNAME(InvoiceDate) AS day_of_week, COUNT(*) AS num_orders, SUM(Quantity * UnitPrice) AS total_revenue
+FROM e_commerce_clone2
+GROUP BY day_of_week
+ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday');
+
+SELECT HOUR(InvoiceDate) AS hour_of_day, COUNT(*) AS num_orders, SUM(Quantity * UnitPrice) AS total_revenue
+FROM e_commerce_clone2
+GROUP BY hour_of_day
+ORDER BY hour_of_day;
 
 -- 6. Order Processing Analysis
--- Order processing times
-SELECT 
-    TIMESTAMPDIFF(HOUR, order_date, shipping_date) as processing_time_hours,
-    COUNT(*) as num_orders
-FROM orders
-GROUP BY processing_time_hours
-ORDER BY processing_time_hours;
+SELECT CASE 
+        WHEN TIMESTAMPDIFF(HOUR, InvoiceDate, ShippingDate) <= 24 THEN '0-24 hours'
+        WHEN TIMESTAMPDIFF(HOUR, InvoiceDate, ShippingDate) <= 48 THEN '24-48 hours'
+        WHEN TIMESTAMPDIFF(HOUR, InvoiceDate, ShippingDate) <= 72 THEN '48-72 hours'
+        ELSE '72+ hours'
+    END AS processing_time_interval,
+    COUNT(*) AS num_orders
+FROM e_commerce_clone2
+GROUP BY processing_time_interval
+ORDER BY processing_time_interval;
 
 -- 7. Geographic Analysis
--- Sales by region/city
-SELECT 
-    c.city,
-    c.region,
-    COUNT(DISTINCT o.order_id) as num_orders,
-    SUM(o.total_amount) as total_revenue
-FROM orders o
-JOIN customers c ON o.customer_id = c.customer_id
-GROUP BY c.city, c.region
+SELECT Country AS region, COUNT(DISTINCT InvoiceNo) AS num_orders, SUM(Quantity * UnitPrice) AS total_revenue,
+    AVG(Quantity * UnitPrice) AS avg_order_value
+FROM e_commerce_clone2
+GROUP BY region
 ORDER BY total_revenue DESC;
 
 -- 8. Time-based Analysis
--- Sales patterns by hour of day
-SELECT 
-    HOUR(order_date) as hour_of_day,
-    COUNT(*) as num_orders,
-    AVG(total_amount) as avg_order_value
-FROM orders
-GROUP BY HOUR(order_date)
+SELECT DAYNAME(InvoiceDate) AS day_of_week, COUNT(*) AS num_orders, SUM(Quantity * UnitPrice) AS total_revenue
+FROM e_commerce_clone2
+GROUP BY day_of_week
+ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday');
+
+SELECT HOUR(InvoiceDate) AS hour_of_day, COUNT(*) AS num_orders, SUM(Quantity * UnitPrice) AS total_revenue
+FROM e_commerce_clone2
+GROUP BY hour_of_day
 ORDER BY hour_of_day;
 
 -- 9. Product Association Analysis
--- Products frequently bought together
-SELECT 
-    p1.product_name as product1,
-    p2.product_name as product2,
-    COUNT(*) as times_bought_together
-FROM order_items oi1
-JOIN order_items oi2 ON oi1.order_id = oi2.order_id
-JOIN products p1 ON oi1.product_id = p1.product_id
-JOIN products p2 ON oi2.product_id = p2.product_id
-WHERE oi1.product_id < oi2.product_id
-GROUP BY p1.product_name, p2.product_name
+SELECT p1.Description AS product1, p2.Description AS product2, COUNT(*) AS times_bought_together
+FROM e_commerce_clone2 p1
+JOIN e_commerce_clone2 p2 ON p1.InvoiceNo = p2.InvoiceNo AND p1.StockCode < p2.StockCode
+GROUP BY p1.Description, p2.Description
+HAVING times_bought_together > 5
 ORDER BY times_bought_together DESC
 LIMIT 10;
