@@ -1,94 +1,113 @@
 # E-commerce Data Analysis with SQL
 
-This project contains SQL scripts designed to perform a detailed Exploratory Data Analysis (EDA) on an e-commerce dataset. The purpose of this analysis is to extract comprehensive insights into customer behavior, product sales, order processing times, geographic sales distribution, and other key metrics to aid business decision-making.
+This project showcases an end-to-end Exploratory Data Analysis (EDA) using SQL queries on an e-commerce dataset. The goal is to extract actionable insights about customer behavior, product performance, sales trends, and operational efficiency, helping businesses make data-driven decisions.
 
-## Project Structure
+## Table of Contents
 
-The SQL file `ecommerce_eda.sql` is organized into sections covering different analytical aspects of the data. Each query addresses specific business questions, from general statistics to complex RFM (Recency, Frequency, Monetary) customer segmentation.
-
-### Table of Contents
-- [Overview Statistics](#overview-statistics)
-- [Sales Analysis](#sales-analysis)
-- [Customer Behavior Analysis](#customer-behavior-analysis)
-- [Product Category Analysis](#product-category-analysis)
-- [Customer Segmentation (RFM Analysis)](#customer-segmentation-rfm-analysis)
-- [Order Processing Analysis](#order-processing-analysis)
-- [Geographic Analysis](#geographic-analysis)
-- [Time-based Analysis](#time-based-analysis)
-- [Product Association Analysis](#product-association-analysis)
+- [Introduction](#introduction)
+- [Analysis Sections](#analysis-sections)
+  - [Overview Statistics](#overview-statistics)
+  - [Sales Analysis](#sales-analysis)
+  - [Customer Behavior Analysis](#customer-behavior-analysis)
+  - [Product Category Analysis](#product-category-analysis)
+  - [Customer Segmentation (RFM Analysis)](#customer-segmentation-rfm-analysis)
+  - [Order Processing Analysis](#order-processing-analysis)
+  - [Geographic Analysis](#geographic-analysis)
+  - [Time-based Analysis](#time-based-analysis)
+  - [Product Association Analysis](#product-association-analysis)
 - [Setup and Requirements](#setup-and-requirements)
 - [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+
+## Introduction
+
+The SQL script performs various analyses on an e-commerce dataset stored in relational database tables. It addresses key business questions such as:
+- Who are the most valuable customers?
+- What are the top-selling products?
+- What trends are visible in sales and orders over time?
+- How efficient is the order processing pipeline?
+- What are the strongest product associations?
 
 ## Analysis Sections
 
 ### Overview Statistics
-Provides basic metrics, including:
-- **Total number of unique customers**
-- **Total number of unique products**
-- **Total number of unique orders**
-- **Total number of unique product categories**
-- **Average number of items per order**
+
+Basic statistics providing a high-level overview of the dataset:
+- Total unique customers
+- Total unique products
+- Total unique orders
+- Average number of items per order
 
 ### Sales Analysis
-Key metrics on sales trends and product performance:
-- **Monthly Revenue Analysis**: Aggregates monthly revenue and average order value. Includes year-over-year breakdowns to identify growth trends.
-- **Top-Selling Products with Discounted Revenue**: Lists the top 10 products by revenue, considering discounted prices (if available) to provide a realistic revenue estimate.
+
+Insights into revenue trends and product performance:
+- Monthly revenue trends
+- Top 10 best-selling products by revenue
 
 ### Customer Behavior Analysis
-Evaluates customer purchase activity:
-- **Customer Purchase Frequency**: Summarizes purchase counts, average spending, first and last purchase dates, customer lifetime in days, and average purchase intervals (days between purchases).
-- **Customer Recency**: Calculates the time since the last purchase for each customer.
+
+Understanding customer purchase patterns:
+- Number of orders, average order value, and purchase recency for each customer
+- Segmentation of customers into activity-based groups (e.g., Active, Churn Risk, Churned)
 
 ### Product Category Analysis
-Aggregates sales metrics by product categories:
-- **Revenue by Category Over Time**: Analyzes revenue by category on a monthly basis, useful for identifying seasonal trends.
-- **Unique Products per Category**: Counts the number of unique products in each category to understand category diversity.
+
+Revenue trends by product categories:
+- Monthly revenue by product category (requires category information in the dataset)
+- Count of unique products per category
 
 ### Customer Segmentation (RFM Analysis)
-Segments customers based on Recency, Frequency, and Monetary (RFM) values, using a quartile-based approach for finer customer segmentation:
-- **VIP**: High recency, frequency, and spending.
-- **Regular**: Moderate recency, frequency, and spending.
-- **Occasional**: Lower recency, frequency, and spending.
+
+Segmentation of customers based on:
+- **Recency**: Time since the last purchase
+- **Frequency**: Total number of purchases
+- **Monetary**: Total spending
+Customers are segmented into groups like VIP, Regular, and Occasional based on their RFM scores.
 
 ### Order Processing Analysis
-Analyzes the distribution of order processing times to understand the efficiency of order fulfillment:
-- **Processing Time Intervals**: Categorizes processing times into intervals (0-24 hours, 24-48 hours, etc.) to identify any potential bottlenecks.
-- **Average Order Processing Time**: Provides a summary of average and median processing times.
+
+Analyzes order processing efficiency:
+- Distribution of processing times (e.g., 0-24 hours, 24-48 hours)
+- Average processing times (if shipping timestamps are available)
 
 ### Geographic Analysis
-Analyzes sales by geographic region to identify high-performing areas:
-- **Sales by City and Region**: Includes total revenue and average order value for each city and region, helping to pinpoint locations with higher customer engagement and spending.
+
+Regional sales performance:
+- Revenue and average order value by country or region
+- Identifying high-performing cities or regions
 
 ### Time-based Analysis
-Analyzes ordering patterns based on time:
-- **Orders by Day of the Week**: Helps identify whether certain days are more popular for orders, providing insight into weekday vs. weekend trends.
-- **Orders by Hour of the Day**: Identifies peak order times throughout the day.
+
+Trends based on time:
+- Sales patterns by day of the week
+- Sales patterns by hour of the day
 
 ### Product Association Analysis
-Performs association analysis to identify frequently bought-together product pairs:
-- **Top Product Pairs**: Lists the top 10 pairs of products frequently bought together, filtered to include only pairs bought together more than 5 times, ensuring that results focus on significant associations.
+
+Frequent product combinations:
+- Top product pairs frequently bought together
+- Association analysis for complementary products
 
 ## Setup and Requirements
 
-To run this analysis, you will need:
-- **SQL-compatible database** (e.g., MySQL, PostgreSQL)
-- **Dataset tables**:
-  - `customers`: Customer details, including columns like `customer_id`, `city`, and `region`.
-  - `products`: Product information, with columns such as `product_id`, `product_name`, and `category_id`.
-  - `orders`: Order data, including `order_id`, `order_date`, `total_amount`, `shipping_date`, and `customer_id`.
-  - `order_items`: Order item details, with fields like `order_id`, `product_id`, `quantity`, `unit_price`, and (optional) `discount`.
-  - `categories`: Product category details, with fields like `category_id` and `category_name`.
+### Prerequisites
+- A SQL-compatible database (e.g., MySQL, PostgreSQL)
+- Dataset tables:
+  - `e_commerce_cleaned` or equivalent: Includes columns such as `InvoiceNo`, `StockCode`, `Description`, `Quantity`, `InvoiceDate`, `UnitPrice`, `CustomerID`, and `Country`.
+  - Additional category or shipping information is optional but can enrich analysis.
 
-Ensure that these tables are populated with data before running the queries.
+### Data Preparation
+Ensure the dataset is imported into your database. The script assumes the following key columns:
+- **Order Details**: `InvoiceNo`, `InvoiceDate`
+- **Product Details**: `Description`, `StockCode`, `Quantity`, `UnitPrice`
+- **Customer Details**: `CustomerID`, `Country`
 
 ## Usage
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/omkarb40/E-commerce-Data-Analysis.git
-   cd ecommerce-data-analysis
-2. Execute the ecommerce_eda.sql script in your SQL environment:
+   cd ecommerce-sql-eda
+2. Load your dataset into a SQL database.
+3. Run the SQL script:
     SOURCE ecommerce_eda.sql;
-3. Review the query outputs to gain insights from each analysis section. The queries are organized in sections within ecommerce_eda.sql for easy navigation.
+4. Review the query results to explore insights.
